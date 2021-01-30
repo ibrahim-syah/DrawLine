@@ -1,4 +1,4 @@
-#include "..\headers\Line.h"
+#include "Line.h"
 
 Line::Line(int _pStart[2], int _pFinal[2], int _width, int _height)
 {

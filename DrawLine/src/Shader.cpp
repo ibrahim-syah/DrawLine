@@ -1,4 +1,4 @@
-#include "..\headers\Shader.h"
+#include "Shader.h"
 
 // constructor generates the shader on the fly
 // ------------------------------------------------------------------------
@@ -77,6 +77,11 @@ void Shader::setInt(const std::string& name, int value) const
 void Shader::setFloat(const std::string& name, float value) const
 {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+}
+// ------------------------------------------------------------------------
+void Shader::setVec4(const std::string& name, float* vector) const
+{
+    glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, vector);
 }
 
 
