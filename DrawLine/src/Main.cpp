@@ -59,14 +59,12 @@ int main()
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    int pStart[2] = { 500, 500 };
-    int pFinal[2] = { 800, 500 };
+    static int pStart[2] = { 500, 500 };
+    static int pFinal[2] = { 800, 500 };
 
     Line horizontal1(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
     std::vector<float> points1 = horizontal1.createPoints(); // this is 1d vector!!
     int numOfPixels = points1.size()/3; // each pixel vertex within the std::vector has 3 components
-
-    std::cout << numOfPixels << std::endl;
 
     float* v = &points1[0];
 
@@ -118,8 +116,6 @@ int main()
     float pointSize = 5.0f;
     ImVec4 line_color = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    static int vec4i[4] = { 0, 50, 0, 0 };
-
     while (!glfwWindowShouldClose(window))
     {
             
@@ -169,8 +165,8 @@ int main()
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color of clear
             ImGui::ColorEdit3("line color", (float*)&line_color); // Edit 3 floats representing a color of line
 
-            ImGui::InputInt2("starting point", vec4i);
-            ImGui::InputInt2("final point", vec4i);
+            ImGui::InputInt2("starting point", pStart);
+            ImGui::InputInt2("final point", pFinal);
 
             if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
                 counter++;
