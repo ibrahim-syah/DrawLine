@@ -60,7 +60,7 @@ int main()
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     static int pStart[2] = { 500, 500 };
-    static int pFinal[2] = { 800, 500 };
+    static int pFinal[2] = { 500, 500 };
 
     Line horizontal1(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
     std::vector<float> points1 = horizontal1.createPoints(); // this is 1d vector!!
@@ -75,7 +75,7 @@ int main()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, points1.size()*sizeof(v), v, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, points1.size()*sizeof(v), v, GL_DYNAMIC_DRAW);
 
     // position attribute (only x, y and z component)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
