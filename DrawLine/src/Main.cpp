@@ -72,9 +72,12 @@ int main()
 
     // set up buffer(s)
     // ----------------------------------
-    unsigned int VBO, VAO;
+    unsigned int VBO, VAO, clearVBO, clearVAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+
+    glGenVertexArrays(1, &clearVAO);
+    glGenBuffers(1, &clearVBO);
 
     // Our initial state
     float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -151,6 +154,16 @@ int main()
             {
                 recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels, pattern[spacing_current]);
             }
+            ImGui::SameLine();
+            if (ImGui::Button("Clear screen"))
+            {
+                // TODO: find the actual solution for this band-aid
+                int p0[] = { -100, -100 };
+                int p1[] = { -100, -100 };
+                numOfPixels = 0;
+                recalculateVertices(&VAO, &VBO, p0, p1, &numOfPixels, pattern[6]);
+            }
+
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
