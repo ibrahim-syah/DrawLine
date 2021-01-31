@@ -12,7 +12,7 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels);
+void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels, const unsigned int _pattern);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -83,6 +83,26 @@ int main()
     int pStart[2] = { 0, 0 };
     int pFinal[2] = { 0, 0 };
     int numOfPixels = 0;
+    int spacing_current = 0;
+    const char* spacing[] = { // 2^24
+        "0 pixel",
+        "4 pixels",
+        "8 pixel",
+        "12 pixel",
+        "16 pixel",
+        "20 pixel",
+        "24 pixel",
+    };
+
+    const unsigned int pattern[] = {
+        0xffffff,
+        0x0fffff,
+        0x00ffff,
+        0x000fff,
+        0x0000ff,
+        0x00000f,
+        0x000000,
+    };
     glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
 
     // render loop
@@ -125,9 +145,11 @@ int main()
 
             ImGui::InputInt2("Starting point", pStart);
             ImGui::InputInt2("Final point", pFinal);
+
+            ImGui::Combo("Pixel Spacing", &spacing_current, spacing, IM_ARRAYSIZE(spacing));
             if (ImGui::Button("Draw line"))
             {
-                recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels);
+                recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels, pattern[spacing_current]);
             }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
@@ -180,10 +202,16 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels)
+void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels, const unsigned int _pattern)
 {
+    //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+    //std::vector<float> points = newLine.createPoints(); // this is 1d vector!!
+    //*numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
+
+    //const unsigned int pattern = 0x000000; // 2^24
+
     Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-    std::vector<float> points = newLine.createPoints(); // this is 1d vector!!
+    std::vector<float> points = newLine.createDottedPoints(_pattern); // this is 1d vector!!
     *numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
 
     float* vertices = &points[0]; // "convert" the std::vector into traditional array

@@ -13,4 +13,5 @@ public:
     void convertToNDC(int _x, int _y, float *r_x, float *r_y);
 
     std::vector<float> createPoints();
+    std::vector<float> createDottedPoints(const unsigned int _pattern);
 };
