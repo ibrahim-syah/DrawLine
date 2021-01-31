@@ -27,9 +27,6 @@
     <ClCompile Include="src\vendor\imgui\imgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\vendor\imgui\imgui_demo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\vendor\imgui\imgui_draw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,5 +81,6 @@
   <ItemGroup>
     <None Include="shaders\fragmentGLSL.fs" />
     <None Include="shaders\vertexGLSL.vs" />
+    <None Include="imgui.ini" />
   </ItemGroup>
 </Project>

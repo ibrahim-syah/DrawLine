@@ -12,14 +12,12 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 const char* glsl_version = "#version 150";
-
-// wireframe mode buffer
-static unsigned char wireframe;
 
 int main()
 {
@@ -57,37 +55,6 @@ int main()
     }
     Shader ourShader("shaders/vertexGLSL.vs", "shaders/fragmentGLSL.fs");
 
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    static int pStart[2] = { 500, 500 };
-    static int pFinal[2] = { 500, 500 };
-
-    Line horizontal1(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-    std::vector<float> points1 = horizontal1.createPoints(); // this is 1d vector!!
-    int numOfPixels = points1.size()/3; // each pixel vertex within the std::vector has 3 components
-
-    float* v = &points1[0];
-
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, points1.size()*sizeof(v), v, GL_DYNAMIC_DRAW);
-
-    // position attribute (only x, y and z component)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
-
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -103,80 +70,92 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
+    // set up vertex data (and buffer(s))
+    // ----------------------------------
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
+
+    // Our initial state
+    float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    float line_color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    float point_size = 5.0f;
+    static int pStart[2] = { 0, 0 };
+    static int pFinal[2] = { 0, 0 };
+    static int numOfPixels = 0;
+
+    //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+    //std::vector<float> points = newLine.createPoints(); // this is 1d vector!!
+    //numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
+
+    //float* vertices = &points[0]; // "convert" the std::vector into traditional array
+
+    //// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    //glBindVertexArray(VAO);
+
+    //glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    //glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+    //// position attribute (only x, y and z component)
+    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    //glEnableVertexAttribArray(0);
+
+    //// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    //glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    //// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    //// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    //glBindVertexArray(0);
+
     // render loop
     // -----------
-
-    glEnable(GL_PROGRAM_POINT_SIZE);
-
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    float pointSize = 5.0f;
-    ImVec4 line_color = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-
     while (!glfwWindowShouldClose(window))
     {
-            
         // input
         // -----
         processInput(window);
 
         // render
         // ------
+        glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+        glClear(GL_COLOR_BUFFER_BIT);
 
+        // be sure to activate the shader
+        ourShader.use();
+
+        // set the customizable attribute with uniform
+        ourShader.setFloat("pointSize", point_size);
+        ourShader.setVec4("lineColor", line_color);
+
+        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        glDrawArrays(GL_POINTS, 0, numOfPixels);
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // be sure to activate the shader
-        ourShader.use();
-
-        // set the point size
-        // float timeValue = glfwGetTime();
-        // float zeroToOne = (sin(timeValue) / 2.0f) + 0.5f;
-        ourShader.setFloat("pointSize", pointSize);
-
-        // set the line color
-        float color[] = { line_color.x, line_color.y, line_color.z, line_color.w };
-        ourShader.setVec4("lineColor", color);
-
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        glDrawArrays(GL_POINTS, 0, numOfPixels);
-        // glBindVertexArray(0); // no need to unbind it every time 
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
-            static float f = 0.0f;
-            static int counter = 0;
-
             ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
             ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 
-            ImGui::SliderFloat("float", &pointSize, 0.0f, 50.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color of clear
-            ImGui::ColorEdit3("line color", (float*)&line_color); // Edit 3 floats representing a color of line
+            ImGui::SliderFloat("Point size", &point_size, 0.0f, 50.0f);
+            ImGui::ColorEdit3("Background color", clear_color); // RGB
+            ImGui::ColorEdit4("Line color", line_color); // RGBA
 
-            ImGui::InputInt2("starting point", pStart);
-            ImGui::InputInt2("final point", pFinal);
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
+            ImGui::InputInt2("Starting point", pStart);
+            ImGui::InputInt2("Final point", pFinal);
+            if (ImGui::Button("Redraw line"))
+            {
+                recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels);
+            }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
-
         // Rendering
         ImGui::Render();
         int display_w, display_h;
@@ -214,13 +193,6 @@ void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
-    // the render loop is too fast
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        glPolygonMode(GL_FRONT_AND_BACK, (wireframe = 1 - wireframe) ? GL_LINE : GL_FILL);
-
-    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -230,4 +202,30 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+}
+
+void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels)
+{
+    Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+    std::vector<float> points = newLine.createPoints(); // this is 1d vector!!
+    *numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
+
+    float* vertices = &points[0]; // "convert" the std::vector into traditional array
+
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(*VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, *VBO);
+    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+    // position attribute (only x, y and z component)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    glBindVertexArray(0);
 }
