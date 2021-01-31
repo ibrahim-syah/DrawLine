@@ -25,7 +25,14 @@ void Line::convertToNDC(int _x, int _y, float *r_x, float *r_y)
 std::vector<float> Line::createPoints()
 {
     std::vector<float> points = {};
-    if (m_pStart[1] == m_pFinal[1]) // horizontal line
+
+    if (m_pStart[0] == m_pFinal[0] && m_pStart[1] == m_pFinal[1]) // a single point
+    {
+        float ndc_x, ndc_y;
+        this->convertToNDC(m_pStart[0], m_pStart[1], &ndc_x, &ndc_y);
+        points = { ndc_x, ndc_y, 0.0f };
+    }
+    else if (m_pStart[1] == m_pFinal[1]) // horizontal line
     {
         int yvalue = m_pStart[1];
         int len = m_pStart[0] - m_pFinal[0];
@@ -52,15 +59,7 @@ std::vector<float> Line::createPoints()
                 points.insert(points.end(), point.begin(), point.end());
                 x++;
             }
-
         }
-        else // m_pStart = m_pFinal
-        {
-            float ndc_x, ndc_y;
-            this->convertToNDC(m_pStart[0], m_pStart[1], &ndc_x, &ndc_y);
-            points = {ndc_x, ndc_y, 0.0f };
-        }
-
     }
     else if (m_pStart[0] == m_pFinal[0]) // vertical line
     {
@@ -89,16 +88,10 @@ std::vector<float> Line::createPoints()
                 points.insert(points.end(), point.begin(), point.end());
                 y++;
             }
-
-        }
-        else // m_pStart = m_pFinal
-        {
-            float ndc_x, ndc_y;
-            this->convertToNDC(m_pStart[0], m_pStart[1], &ndc_x, &ndc_y);
-            points = { ndc_x, ndc_y, 0.0f };
         }
     }
-    // else // oblique line
+    // TODO: implement oblique line (case 5-16)
+    // else if (True)
     // {
     //     /* code */
     // }

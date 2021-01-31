@@ -35,7 +35,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Draw Line", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -70,44 +70,20 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    // set up vertex data (and buffer(s))
+    // set up buffer(s)
     // ----------------------------------
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
-    glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
-
     // Our initial state
     float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     float line_color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
     float point_size = 5.0f;
-    static int pStart[2] = { 0, 0 };
-    static int pFinal[2] = { 0, 0 };
-    static int numOfPixels = 0;
-
-    //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-    //std::vector<float> points = newLine.createPoints(); // this is 1d vector!!
-    //numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
-
-    //float* vertices = &points[0]; // "convert" the std::vector into traditional array
-
-    //// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    //glBindVertexArray(VAO);
-
-    //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-
-    //// position attribute (only x, y and z component)
-    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    //glEnableVertexAttribArray(0);
-
-    //// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    //// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    //// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    //glBindVertexArray(0);
+    int pStart[2] = { 0, 0 };
+    int pFinal[2] = { 0, 0 };
+    int numOfPixels = 0;
+    glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
 
     // render loop
     // -----------
@@ -149,7 +125,7 @@ int main()
 
             ImGui::InputInt2("Starting point", pStart);
             ImGui::InputInt2("Final point", pFinal);
-            if (ImGui::Button("Redraw line"))
+            if (ImGui::Button("Draw line"))
             {
                 recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels);
             }
