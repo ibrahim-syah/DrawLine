@@ -158,6 +158,21 @@ int main()
                 numOfPixels = 0;
                 recalculateVertices(&VAO, &VBO, p0, p1, &numOfPixels, 0x000000);
             }
+            ImGui::Text("Relative to the source directory");
+            if (ImGui::Button("Save file"))
+            {
+                Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+                newLine.writeJSON("filename.json", point_size, spacing_current, clear_color, line_color);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Open file"))
+            {
+                // this is really ugly
+                Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+                newLine.readJSON("filename.json", pStart, pFinal, &point_size, &spacing_current, clear_color, line_color);
+
+                recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels, pattern[spacing_current]);
+            }
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
@@ -225,6 +240,7 @@ void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], in
     glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
     // position attribute (only x, y and z component)
+    // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 

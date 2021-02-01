@@ -161,3 +161,106 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
     // }
     return points;
 }
+
+void Line::writeJSON(const char* filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4])
+{
+    m_root["scr_width"] = m_width;
+    m_root["scr_height"] = m_height;
+
+    m_root["pStart"]["x"] = m_pStart[0];
+    m_root["pStart"]["y"] = m_pStart[1];
+    m_root["pFinal"]["x"] = m_pFinal[0];
+    m_root["pFinal"]["y"] = m_pFinal[1];
+
+    m_root["point_size"] = point_size;
+    m_root["spacing_index"] = pattern;
+
+    m_root["clear_color"]["R"] = clear_color[0];
+    m_root["clear_color"]["G"] = clear_color[1];
+    m_root["clear_color"]["B"] = clear_color[2];
+    m_root["clear_color"]["A"] = clear_color[3];
+
+    m_root["line_color"]["R"] = line_color[0];
+    m_root["line_color"]["G"] = line_color[1];
+    m_root["line_color"]["B"] = line_color[2];
+    m_root["line_color"]["A"] = line_color[3];
+
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["indentation"] = "\t";
+    std::string document = Json::writeString(wbuilder, m_root);
+
+    std::fstream file;
+    file.open(filename, std::ios::out);
+    if (!file) {
+        std::cout << "File not created!";
+    }
+    else {
+        std::cout << "File created successfully!";
+        file << document << "\n";
+        file.close();
+    }
+}
+
+//void Line::readJSON(const char* filename)
+//{
+//    Json::CharReaderBuilder rbuilder;
+//    rbuilder["collectComments"] = false;
+//    std::string errs;
+//
+//    std::fstream file;
+//    std::string document;
+//    file.open(filename, std::ios::in);
+//    if (!file) {
+//        std::cout << "File cannot be read!";
+//    }
+//    else {
+//        std::cout << "Read file successfully!";
+//        bool ok = Json::parseFromStream(rbuilder, file, &m_root, &errs);
+//        file.close();
+//    }
+//}
+
+void Line::readJSON(const char* filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4])
+{
+    Json::CharReaderBuilder rbuilder;
+    rbuilder["collectComments"] = false;
+    std::string errs;
+
+    std::fstream file;
+    std::string document;
+    file.open(filename, std::ios::in);
+    if (!file) {
+        std::cout << "File cannot be read!";
+    }
+    else {
+        std::cout << "Read file successfully!";
+        bool ok = Json::parseFromStream(rbuilder, file, &m_root, &errs);
+
+        m_width = m_root["scr_width"].asInt();
+        m_height = m_root["scr_height"].asInt();
+        m_pStart[0] = m_root["pStart"]["x"].asInt();
+        m_pStart[1] = m_root["pStart"]["y"].asInt();
+        m_pFinal[0] = m_root["pFinal"]["x"].asInt();
+        m_pFinal[1] = m_root["pFinal"]["y"].asInt();
+
+        pStart[0] = m_pStart[0];
+        pStart[1] = m_pStart[1];
+        pFinal[0] = m_pFinal[0];
+        pFinal[1] = m_pFinal[1];
+
+        *point_size = m_root["point_size"].asFloat();
+        *pattern = m_root["spacing_index"].asInt();
+
+        clear_color[0] = m_root["clear_color"]["R"].asFloat();
+        clear_color[1] = m_root["clear_color"]["G"].asFloat();
+        clear_color[2] = m_root["clear_color"]["B"].asFloat();
+        clear_color[3] = m_root["clear_color"]["A"].asFloat();
+
+        line_color[0] = m_root["line_color"]["R"].asFloat();
+        line_color[1] = m_root["line_color"]["G"].asFloat();
+        line_color[2] = m_root["line_color"]["B"].asFloat();
+        line_color[3] = m_root["line_color"]["A"].asFloat();
+
+        file.close();
+    }
+}
