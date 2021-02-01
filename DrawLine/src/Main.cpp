@@ -72,12 +72,9 @@ int main()
 
     // set up buffer(s)
     // ----------------------------------
-    unsigned int VBO, VAO, clearVBO, clearVAO;
+    unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
-    glGenVertexArrays(1, &clearVAO);
-    glGenBuffers(1, &clearVBO);
 
     // Our initial state
     float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -94,7 +91,6 @@ int main()
         "12 pixel",
         "16 pixel",
         "20 pixel",
-        "24 pixel",
     };
 
     const unsigned int pattern[] = {
@@ -104,7 +100,6 @@ int main()
         0x000fff,
         0x0000ff,
         0x00000f,
-        0x000000,
     };
     glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
 
@@ -161,7 +156,7 @@ int main()
                 int p0[] = { -100, -100 };
                 int p1[] = { -100, -100 };
                 numOfPixels = 0;
-                recalculateVertices(&VAO, &VBO, p0, p1, &numOfPixels, pattern[6]);
+                recalculateVertices(&VAO, &VBO, p0, p1, &numOfPixels, 0x000000);
             }
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -217,12 +212,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels, const unsigned int _pattern)
 {
-    //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-    //std::vector<float> points = newLine.createPoints(); // this is 1d vector!!
-    //*numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
-
-    //const unsigned int pattern = 0x000000; // 2^24
-
     Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
     std::vector<float> points = newLine.createDottedPoints(_pattern); // this is 1d vector!!
     *numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
