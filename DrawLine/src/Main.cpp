@@ -213,7 +213,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void recalculateVertices(unsigned int* VAO, unsigned int* VBO, int pStart[2], int pFinal[2], int* numOfPixels, const unsigned int _pattern)
 {
     Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-    std::vector<float> points = newLine.createDottedPoints(_pattern); // this is 1d vector!!
+    std::vector<float> points = newLine.createPoints(_pattern); // this is 1d vector!!
     *numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
 
     float* vertices = &points[0]; // "convert" the std::vector into traditional array
