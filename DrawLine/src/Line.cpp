@@ -25,6 +25,10 @@ void Line::convertToNDC(int _x, int _y, float *r_x, float *r_y)
     *r_y = 2.0f * _y / m_height - 1.0f;
 }
 
+
+// This code is very redundant, there's a lot of code duplication, it's useful to get a 
+// solid understanding of how the algorithm works, but be sure to fix this spaghetti code
+// before shipping it
 std::vector<float> Line::createPoints(const unsigned int _pattern)
 {
     unsigned int curr_pattern;
@@ -494,9 +498,9 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
                     int dUR = 2 * (dx - dy);
                     int d = 2 * dx - dy;
 
-                    int x = m_pFinal[0];
-                    int y = m_pFinal[1];
-                    for (int i = 0; y > m_pStart[1]; i++)
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; y < m_pFinal[1]; i++)
                     {
                         float ndc_x, ndc_y, ndc_z;
                         ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
@@ -504,7 +508,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
                         this->convertToNDC(x, y, &ndc_x, &ndc_y);
                         std::vector<float> point = { ndc_x, ndc_y, ndc_z };
                         points.insert(points.end(), point.begin(), point.end());
-                        y--;
+                        y++;
 
                         if (d < 0) // M is below the line, pick R
                         {
@@ -513,7 +517,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
                         else // M is either on the line or above the line, either case pick UR
                         {
                             d = d + dUR;
-                            x--;
+                            x++;
                         }
 
                         if (counter == 23)
@@ -584,9 +588,9 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
                     int dUR = 2 * (dx - dy);
                     int d = 2 * dx - dy;
 
-                    int x = m_pFinal[0];
-                    int y = m_pFinal[1];
-                    for (int i = 0; y > m_pStart[1]; i++)
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; y < m_pFinal[1]; i++)
                     {
                         float ndc_x, ndc_y, ndc_z;
                         ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
@@ -594,7 +598,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
                         this->convertToNDC(x, y, &ndc_x, &ndc_y);
                         std::vector<float> point = { ndc_x, ndc_y, ndc_z };
                         points.insert(points.end(), point.begin(), point.end());
-                        y--;
+                        y++;
 
                         if (d < 0) // M is below the line, pick R
                         {
@@ -603,7 +607,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
                         else // M is either on the line or above the line, either case pick UR
                         {
                             d = d + dUR;
-                            x++;
+                            x--;
                         }
 
                         if (counter == 23)
