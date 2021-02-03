@@ -14,6 +14,7 @@ private:
 
     Json::Value m_root;
 public:
+    Line();
     Line(int _pStart[2], int _pFinal[2], int width, int height);
     ~Line();
 

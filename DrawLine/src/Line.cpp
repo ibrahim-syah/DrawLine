@@ -1,5 +1,9 @@
 #include "Line.h"
 
+Line::Line()
+{
+}
+
 Line::Line(int _pStart[2], int _pFinal[2], int _width, int _height)
 {
     m_width = _width;
@@ -16,7 +20,7 @@ Line::~Line()
 
 void Line::convertToNDC(int _x, int _y, float *r_x, float *r_y)
 {
-    // convert into opengl vec2 range (-1 to 1)
+    // convert into opengl Normalized Device Coordinates (NDC) range (-1 to 1)
     *r_x = 2.0f * _x / m_width - 1.0f;
     *r_y = 2.0f * _y / m_height - 1.0f;
 }
@@ -200,25 +204,6 @@ void Line::writeJSON(const char* filename, const float point_size, const int pat
         file.close();
     }
 }
-
-//void Line::readJSON(const char* filename)
-//{
-//    Json::CharReaderBuilder rbuilder;
-//    rbuilder["collectComments"] = false;
-//    std::string errs;
-//
-//    std::fstream file;
-//    std::string document;
-//    file.open(filename, std::ios::in);
-//    if (!file) {
-//        std::cout << "File cannot be read!";
-//    }
-//    else {
-//        std::cout << "Read file successfully!";
-//        bool ok = Json::parseFromStream(rbuilder, file, &m_root, &errs);
-//        file.close();
-//    }
-//}
 
 void Line::readJSON(const char* filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4])
 {
