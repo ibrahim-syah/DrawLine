@@ -30,11 +30,15 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
     unsigned int curr_pattern;
     std::vector<float> points = {};
 
+    int counter = 0;
+    curr_pattern = _pattern;
+
     if (m_pStart[0] == m_pFinal[0] && m_pStart[1] == m_pFinal[1]) // a single point
     {
         float ndc_x, ndc_y;
         this->convertToNDC(m_pStart[0], m_pStart[1], &ndc_x, &ndc_y);
         points = { ndc_x, ndc_y, 0.0f };
+        std::cout << "case 0 (point)" << std::endl;
     }
     else if (m_pStart[1] == m_pFinal[1]) // horizontal line
     {
@@ -44,6 +48,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
         curr_pattern = _pattern;
         if (len < 0) // "rightward"
         {
+            std::cout << "case 1 (horizontal right)" << std::endl;
             int x = m_pStart[0];
             for (int i = 0; x < m_pFinal[0]; i++)
             {
@@ -71,6 +76,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
         }
         else if (len > 0) // "leftward"
         {
+            std::cout << "case 3 (horizontal left)" << std::endl;
             int x = m_pFinal[0];
             for (int i = 0; x < m_pStart[0]; i++)
             {
@@ -105,6 +111,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
         curr_pattern = _pattern;
         if (len < 0) // "upward"
         {
+            std::cout << "case 2 (vertical up)" << std::endl;
             int y = m_pStart[1];
             for (int i = 0; y < m_pFinal[1]; i++)
             {
@@ -132,6 +139,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
         }
         else if (len > 0) // "downward"
         {
+            std::cout << "case 4 (vertical down)" << std::endl;
             int y = m_pFinal[1];
             for (int i = 0; y < m_pStart[1]; i++)
             {
@@ -161,8 +169,6 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
     else if (std::abs(m_pFinal[0] - m_pStart[0]) == std::abs(m_pFinal[1] - m_pStart[1]) ) // 45 degree cases
     {
         int len = m_pStart[0] - m_pFinal[0];
-        int counter = 0;
-        curr_pattern = _pattern;
 
         int x = m_pStart[0];
         int y = m_pStart[1];
@@ -170,6 +176,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
         {
             if (m_pFinal[1] > m_pStart[1]) // upward rightward
             {
+                std::cout << "case 5 (45 degree 1st quadrant)" << std::endl;
                 for (int i = 0; x < m_pFinal[0]; i++)
                 {
                     float ndc_x, ndc_y, ndc_z;
@@ -197,6 +204,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
             }
             else // rightward downward
             {
+                std::cout << "case 8 (45 degree 4th quadrant)" << std::endl;
                 for (int i = 0; x < m_pFinal[0]; i++)
                 {
                     float ndc_x, ndc_y, ndc_z;
@@ -227,6 +235,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
         {
             if (m_pFinal[1] > m_pStart[1]) // upward leftward
             {
+                std::cout << "case 6 (45 degree 2nd quadrant)" << std::endl;
                 for (int i = 0; x > m_pFinal[0]; i++)
                 {
                     float ndc_x, ndc_y, ndc_z;
@@ -254,6 +263,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
             }
             else // leftward downward
             {
+                std::cout << "case 7 (45 degree 3rd quadrant)" << std::endl;
                 for (int i = 0; x > m_pFinal[0]; i++)
                 {
                     float ndc_x, ndc_y, ndc_z;
@@ -281,11 +291,381 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
             }
         }
     }
-    // TODO: implement oblique line (case 5-16)
-    // else if (True)
-    // {
-    //     /* code */
-    // }
+    else // case 9 - 16 with bresenham
+    {
+        int dx = abs(m_pFinal[0] - m_pStart[0]);
+        int dy = abs(m_pFinal[1] - m_pStart[1]);
+
+        if (dx > dy)
+        {
+            if (m_pFinal[0] > m_pStart[0])
+            {
+                if (m_pFinal[1] > m_pStart[1])
+                {
+                    std::cout << "case 9 (theta < 45 degree 1st quadrant)" << std::endl;
+
+                    int dR = 2 * dy;
+                    int dUR = 2 * (dy - dx);
+                    int d = 2 * dy - dx;
+
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; x < m_pFinal[0]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        x++;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            y++;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+                else
+                {
+                    std::cout << "case 16 (theta < 45 degree 4th quadrant)" << std::endl;
+
+                    int dR = 2 * dy;
+                    int dUR = 2 * (dy - dx);
+                    int d = 2 * dy - dx;
+
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; x < m_pFinal[0]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        x++;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            y--;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (m_pFinal[1] > m_pStart[1])
+                {
+                    std::cout << "case 12 (theta < 45 degree 2nd quadrant)" << std::endl;
+
+                    int dR = 2 * dy;
+                    int dUR = 2 * (dy - dx);
+                    int d = 2 * dy - dx;
+
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; x > m_pFinal[0]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        x--;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            y++;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+                else
+                {
+                    std::cout << "case 13 (theta < 45 degree 3rd quadrant)" << std::endl;
+
+                    int dR = 2 * dy;
+                    int dUR = 2 * (dy - dx);
+                    int d = 2 * dy - dx;
+
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; x > m_pFinal[0]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        x--;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            y--;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+                
+            }
+            
+        } // |dy| > |dx|
+        else
+        {
+            if (m_pFinal[0] > m_pStart[0])
+            {
+                if (m_pFinal[1] > m_pStart[1])
+                {
+                    std::cout << "case 10 (theta > 45 degree 1st quadrant)" << std::endl;
+                    int dR = 2 * dx;
+                    int dUR = 2 * (dx - dy);
+                    int d = 2 * dx - dy;
+
+                    int x = m_pFinal[0];
+                    int y = m_pFinal[1];
+                    for (int i = 0; y > m_pStart[1]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        y--;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            x--;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+                else
+                {
+                    std::cout << "case 15 (theta > 45 degree 4th quadrant)" << std::endl;
+                    int dR = 2 * dx;
+                    int dUR = 2 * (dx - dy);
+                    int d = 2 * dx - dy;
+
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; y > m_pFinal[1]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        y--;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            x++;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+                
+            }
+            else
+            {
+                if (m_pFinal[1] > m_pStart[1])
+                {
+                    std::cout << "case 11 (theta > 45 degree 2nd quadrant)" << std::endl;
+                    int dR = 2 * dx;
+                    int dUR = 2 * (dx - dy);
+                    int d = 2 * dx - dy;
+
+                    int x = m_pFinal[0];
+                    int y = m_pFinal[1];
+                    for (int i = 0; y > m_pStart[1]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        y--;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            x++;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+                else
+                {
+                    std::cout << "case 14 (theta > 45 degree 3rd quadrant)" << std::endl;
+                    int dR = 2 * dx;
+                    int dUR = 2 * (dx - dy);
+                    int d = 2 * dx - dy;
+
+                    int x = m_pStart[0];
+                    int y = m_pStart[1];
+                    for (int i = 0; y > m_pFinal[1]; i++)
+                    {
+                        float ndc_x, ndc_y, ndc_z;
+                        ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                        this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                        std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                        points.insert(points.end(), point.begin(), point.end());
+                        y--;
+
+                        if (d < 0) // M is below the line, pick R
+                        {
+                            d = d + dR;
+                        }
+                        else // M is either on the line or above the line, either case pick UR
+                        {
+                            d = d + dUR;
+                            x--;
+                        }
+
+                        if (counter == 23)
+                        {
+                            counter = 0;
+                            curr_pattern = _pattern;
+                        }
+                        else
+                        {
+                            counter++;
+                            // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                            // that was not a very technical description for a right bit shift of 1.
+                            curr_pattern = curr_pattern >> 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
     return points;
 }
 

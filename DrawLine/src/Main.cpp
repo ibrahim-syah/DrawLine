@@ -169,10 +169,9 @@ int main()
                     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
                     glEnableVertexAttribArray(0);
                 }
-                catch (const std::exception& e) {
-                    // Log error message in the exception object
+                catch ( ... ) {
                     // this is really dangerous, idk what will happen, just print the error message, and clear the screen and hope for the best
-                    std::cerr << e.what();
+                    std::cout << "that exception caught" << std::endl;
                     numOfPixels = 0;
                 }
 
@@ -221,10 +220,9 @@ int main()
                     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // last argument is the offset to the vertex attribute
                     glEnableVertexAttribArray(0);
                 }
-                catch (const std::exception& e) {
-                    // Log error message in the exception object
+                catch ( ... ) {
                     // this is really dangerous, idk what will happen, just print the error message, and clear the screen and hope for the best
-                    std::cerr << e.what();
+                    std::cout << "that exception caught" << std::endl;
                     numOfPixels = 0;
                 }
 
