@@ -163,32 +163,120 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
         int len = m_pStart[0] - m_pFinal[0];
         int counter = 0;
         curr_pattern = _pattern;
-        if (len < 0) // upright
+
+        int x = m_pStart[0];
+        int y = m_pStart[1];
+        if (len < 0) // rightward
         {
-            int x = m_pStart[0];
-            int y = m_pStart[1];
-            for (int i = 0; x < m_pFinal[0]; i++)
+            if (m_pFinal[1] > m_pStart[1]) // upward rightward
             {
-                float ndc_x, ndc_y, ndc_z;
-                ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
-
-                this->convertToNDC(x, y, &ndc_x, &ndc_y);
-                std::vector<float> point = { ndc_x, ndc_y, ndc_z };
-                points.insert(points.end(), point.begin(), point.end());
-                x++;
-                y++;
-
-                if (counter == 23)
+                for (int i = 0; x < m_pFinal[0]; i++)
                 {
-                    counter = 0;
-                    curr_pattern = _pattern;
+                    float ndc_x, ndc_y, ndc_z;
+                    ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                    this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                    x++;
+                    y++;
+
+                    if (counter == 23)
+                    {
+                        counter = 0;
+                        curr_pattern = _pattern;
+                    }
+                    else
+                    {
+                        counter++;
+                        // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                        // that was not a very technical description for a right bit shift of 1.
+                        curr_pattern = curr_pattern >> 1;
+                    }
                 }
-                else
+            }
+            else // rightward downward
+            {
+                for (int i = 0; x < m_pFinal[0]; i++)
                 {
-                    counter++;
-                    // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
-                    // that was not a very technical description for a right bit shift of 1.
-                    curr_pattern = curr_pattern >> 1;
+                    float ndc_x, ndc_y, ndc_z;
+                    ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                    this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                    x++;
+                    y--;
+
+                    if (counter == 23)
+                    {
+                        counter = 0;
+                        curr_pattern = _pattern;
+                    }
+                    else
+                    {
+                        counter++;
+                        // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                        // that was not a very technical description for a right bit shift of 1.
+                        curr_pattern = curr_pattern >> 1;
+                    }
+                }
+            }
+        }
+        else if (len > 0) // leftward
+        {
+            if (m_pFinal[1] > m_pStart[1]) // upward leftward
+            {
+                for (int i = 0; x > m_pFinal[0]; i++)
+                {
+                    float ndc_x, ndc_y, ndc_z;
+                    ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                    this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                    x--;
+                    y++;
+
+                    if (counter == 23)
+                    {
+                        counter = 0;
+                        curr_pattern = _pattern;
+                    }
+                    else
+                    {
+                        counter++;
+                        // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                        // that was not a very technical description for a right bit shift of 1.
+                        curr_pattern = curr_pattern >> 1;
+                    }
+                }
+            }
+            else // leftward downward
+            {
+                for (int i = 0; x > m_pFinal[0]; i++)
+                {
+                    float ndc_x, ndc_y, ndc_z;
+                    ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
+
+                    this->convertToNDC(x, y, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                    x--;
+                    y--;
+
+                    if (counter == 23)
+                    {
+                        counter = 0;
+                        curr_pattern = _pattern;
+                    }
+                    else
+                    {
+                        counter++;
+                        // insert a zero on the left and push every bit to the right, and the rightmost will be thrown away.
+                        // that was not a very technical description for a right bit shift of 1.
+                        curr_pattern = curr_pattern >> 1;
+                    }
                 }
             }
         }
