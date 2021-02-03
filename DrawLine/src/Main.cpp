@@ -11,11 +11,14 @@
 #include "vendor/imgui/imgui_impl_glfw.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+//void mouse_callback(GLFWwindow* window, int button, int action, int mods);
 void processInput(GLFWwindow* window);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+unsigned int SCR_WIDTH = 800;
+unsigned int SCR_HEIGHT = 600;
+int* pStart = new int[2]{ 0, 0 };
+int* pFinal = new int[2]{ 0, 0 };
 const char* glsl_version = "#version 150";
 
 int main()
@@ -44,6 +47,7 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //glfwSetMouseButtonCallback(window, mouse_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -79,8 +83,8 @@ int main()
     float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     float line_color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
     float point_size = 5.0f;
-    int pStart[2] = { 0, 0 };
-    int pFinal[2] = { 0, 0 };
+    /*int pStart[2] = { 0, 0 };
+    int pFinal[2] = { 0, 0 };*/
     int numOfPixels = 0;
     int spacing_current = 0;
     const char* spacing[] = { // 2^24
@@ -274,6 +278,26 @@ void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+        double x;
+        double y;
+        glfwGetCursorPos(window, &x, &y);
+
+        // opengl set the coordinate from bottom left while glfw is from top left smh
+        pStart[1] = -1 * (floor(y)) + SCR_HEIGHT;
+        pStart[0] = floor(x);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+        double x;
+        double y;
+        glfwGetCursorPos(window, &x, &y);
+
+        // opengl set the coordinate from bottom left while glfw is from top left smh
+        pFinal[1] = -1.0 * (floor(y)) + SCR_HEIGHT;
+        pFinal[0] = floor(x);
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -283,4 +307,31 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
 }
+
+//void mouse_callback(GLFWwindow* window, int button, int action, int mods)
+//{
+//    // if i use mouse button, clicking anything on imgui window will trigger it as well
+//    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+//        double x;
+//        double y;
+//        glfwGetCursorPos(window, &x, &y);
+//
+//        // opengl set the coordinate from bottom left while glfw is from top left smh
+//        pStart[1] = -1 * (floor(y)) + SCR_HEIGHT;
+//        pStart[0] = floor(x);
+//    }
+//
+//    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+//        double x;
+//        double y;
+//        glfwGetCursorPos(window, &x, &y);
+//
+//        // opengl set the coordinate from bottom left while glfw is from top left smh
+//        pFinal[1] = -1 * (floor(y)) + SCR_HEIGHT;
+//        pFinal[0] = floor(x);
+//    }
+//}
