@@ -111,12 +111,13 @@ int main()
     glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
 
     // create a file browser instance
-    ImGui::FileBrowser saveFileDialog;
+    ImGui::FileBrowser saveFileDialog(ImGuiFileBrowserFlags_EnterNewFilename);
     ImGui::FileBrowser loadFileDialog;
 
     // (optional) set browser properties
     saveFileDialog.SetTypeFilters({ ".json" });
     saveFileDialog.SetTitle("Save file");
+
     loadFileDialog.SetTypeFilters({ ".json" });
     loadFileDialog.SetTitle("Load file");
 
