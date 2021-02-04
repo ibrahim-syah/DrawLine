@@ -11,6 +11,7 @@
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imfilebrowser.h"
 
+void recalculateVertices(unsigned int _pattern, int _line_width, int* _numOfPixels, unsigned int* _VAO);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 //void mouse_callback(GLFWwindow* window, int button, int action, int mods);
 void processInput(GLFWwindow* window);
@@ -83,8 +84,6 @@ int main()
     float clear_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     float line_color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
     float point_size = 1.0f;
-    /*int pStart[2] = { 0, 0 };
-    int pFinal[2] = { 0, 0 };*/
     int numOfPixels = 0;
     int lineWidth = 1;
     int spacing_current = 0;
@@ -168,39 +167,7 @@ int main()
             ImGui::Combo("Pixel Spacing", &spacing_current, spacing, IM_ARRAYSIZE(spacing));
             if (ImGui::Button("Draw line"))
             {
-                *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                std::vector<float> points = newLine->createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
-                numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
-
-                unsigned int tempVBO;
-                glGenBuffers(1, &tempVBO);
-                // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-                glBindVertexArray(VAO);
-
-                glBindBuffer(GL_ARRAY_BUFFER, tempVBO);
-
-                try
-                {
-                    // position attribute (only x, y and z component)
-                    // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
-                    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(points[0]), points.data(), GL_STATIC_DRAW);
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset(could be 0 or null as well) to the vertex attribute
-                    glEnableVertexAttribArray(0);
-                }
-                catch ( ... ) {
-                    // this is really dangerous, idk what will happen, just print the error message, and clear the screen and hope for the best
-                    std::cout << "that exception caught" << std::endl;
-                    numOfPixels = 0;
-                }
-
-                // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-                // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-                glBindVertexArray(0);
-
-                glDeleteBuffers(1, &tempVBO);
+                recalculateVertices(pattern[spacing_current], lineWidth, &numOfPixels, &VAO);
             }
             ImGui::SameLine();
             if (ImGui::Button("Clear screen"))
@@ -244,41 +211,7 @@ int main()
                 *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
                 if (newLine->readJSON(loadFileDialog.GetSelected().string(), pStart, pFinal, &point_size, &spacing_current, clear_color, line_color, &lineWidth))
                 {
-                    std::vector<float> points = newLine->createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
-                    numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
-
-                    //float* vertices = &points[0]; // "convert" the std::vector into traditional array
-
-                    unsigned int tempVBO;
-                    glGenBuffers(1, &tempVBO);
-                    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-                    glBindVertexArray(VAO);
-
-                    glBindBuffer(GL_ARRAY_BUFFER, tempVBO);
-
-                    try
-                    {
-                        // position attribute (only x, y and z component)
-                        // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
-                        //glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_STATIC_DRAW);
-                        glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(points[0]), points.data(), GL_STATIC_DRAW);
-                        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset (could be 0 or null as well) to the vertex attribute
-                        glEnableVertexAttribArray(0);
-                    }
-                    catch (...) {
-                        // this is really dangerous, idk what will happen, just print the error message, and clear the screen and hope for the best
-                        std::cout << "that exception caught" << std::endl;
-                        numOfPixels = 0;
-                    }
-
-                    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-                    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-                    glBindVertexArray(0);
-
-                    glDeleteBuffers(1, &tempVBO);
+                    recalculateVertices(pattern[spacing_current], lineWidth, &numOfPixels, &VAO);
                 }
                 loadFileDialog.ClearSelected();
             }
@@ -309,10 +242,47 @@ int main()
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
-
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
+}
+
+// Given the new points, recalculate the line
+void recalculateVertices(unsigned int _pattern, int _line_width, int* _numOfPixels, unsigned int* _VAO)
+{
+    Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+    std::vector<float> points = newLine.createPoints(_pattern, _line_width); // this is 1d vector!!
+    *_numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
+
+    unsigned int tempVBO;
+    glGenBuffers(1, &tempVBO);
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(*_VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, tempVBO);
+
+    try
+    {
+        // position attribute (only x, y and z component)
+        // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
+        glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(points[0]), points.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset(could be 0 or null as well) to the vertex attribute
+        glEnableVertexAttribArray(0);
+    }
+    catch (...) {
+        // this is really dangerous, idk what will happen, just print the error message, and clear the screen and hope for the best
+        std::cout << "that exception caught" << std::endl;
+        *_numOfPixels = 0;
+    }
+
+    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    glBindVertexArray(0);
+
+    glDeleteBuffers(1, &tempVBO);
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly

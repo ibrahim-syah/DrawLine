@@ -24,6 +24,5 @@ public:
     std::vector<float> createPoints(const unsigned int _pattern, const int _lineWidth);
 
     void writeJSON(const std::string filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4], const int lineWidth);
-    //void readJSON(const char* filename);
     bool readJSON(const std::string filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4], int *lineWidth);
 };
