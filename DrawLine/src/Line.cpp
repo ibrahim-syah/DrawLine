@@ -29,7 +29,7 @@ void Line::convertToNDC(int _x, int _y, float *r_x, float *r_y)
 // This code is very redundant, there's a lot of code duplication, it's useful to get a 
 // solid understanding of how the algorithm works, but be sure to fix this spaghetti code
 // before shipping it
-std::vector<float> Line::createPoints(const unsigned int _pattern)
+std::vector<float> Line::createPoints(const unsigned int _pattern, const int _lineWidth)
 {
     unsigned int curr_pattern;
     std::vector<float> points = {};
@@ -59,9 +59,12 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
                 float ndc_x, ndc_y, ndc_z;
                 ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
 
-                this->convertToNDC(x, yvalue, &ndc_x, &ndc_y);
-                std::vector<float> point = { ndc_x, ndc_y, ndc_z};
-                points.insert(points.end(), point.begin(), point.end());
+                for (int j = 0; j < _lineWidth; j++)
+                {
+                    this->convertToNDC(x, yvalue+j, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                }
                 x++;
 
                 if (counter == 23)
@@ -673,7 +676,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern)
     return points;
 }
 
-void Line::writeJSON(const char* filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4])
+void Line::writeJSON(const char* filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4], const int lineWidth)
 {
     m_root["scr_width"] = m_width;
     m_root["scr_height"] = m_height;
@@ -682,6 +685,8 @@ void Line::writeJSON(const char* filename, const float point_size, const int pat
     m_root["pStart"]["y"] = m_pStart[1];
     m_root["pFinal"]["x"] = m_pFinal[0];
     m_root["pFinal"]["y"] = m_pFinal[1];
+
+    m_root["line_width"] = lineWidth;
 
     m_root["point_size"] = point_size;
     m_root["spacing_index"] = pattern;
@@ -712,7 +717,7 @@ void Line::writeJSON(const char* filename, const float point_size, const int pat
     }
 }
 
-void Line::readJSON(const char* filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4])
+void Line::readJSON(const char* filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4], int *lineWidth)
 {
     Json::CharReaderBuilder rbuilder;
     rbuilder["collectComments"] = false;
@@ -739,6 +744,8 @@ void Line::readJSON(const char* filename, int pStart[2], int pFinal[2], float *p
         pStart[1] = m_pStart[1];
         pFinal[0] = m_pFinal[0];
         pFinal[1] = m_pFinal[1];
+
+        *lineWidth = m_root["line_width"].asInt();
 
         *point_size = m_root["point_size"].asFloat();
         *pattern = m_root["spacing_index"].asInt();

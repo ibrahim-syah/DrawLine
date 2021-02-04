@@ -21,9 +21,9 @@ public:
 
     void convertToNDC(int _x, int _y, float *r_x, float *r_y);
 
-    std::vector<float> createPoints(const unsigned int _pattern);
+    std::vector<float> createPoints(const unsigned int _pattern, const int _lineWidth);
 
-    void writeJSON(const char* filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4]);
+    void writeJSON(const char* filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4], const int lineWidth);
     //void readJSON(const char* filename);
-    void readJSON(const char* filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4]);
+    void readJSON(const char* filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4], int *lineWidth);
 };
