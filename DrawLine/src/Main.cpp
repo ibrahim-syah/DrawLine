@@ -9,6 +9,7 @@
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
 #include "vendor/imgui/imgui_impl_glfw.h"
+#include "vendor/imgui/imfilebrowser.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 //void mouse_callback(GLFWwindow* window, int button, int action, int mods);
@@ -109,10 +110,27 @@ int main()
 
     glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
 
+    // create a file browser instance
+    ImGui::FileBrowser saveFileDialog;
+    ImGui::FileBrowser loadFileDialog;
+
+    // (optional) set browser properties
+    saveFileDialog.SetTypeFilters({ ".json" });
+    saveFileDialog.SetTitle("Save file");
+    loadFileDialog.SetTypeFilters({ ".json" });
+    loadFileDialog.SetTitle("Load file");
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+
         // input
         // -----
         processInput(window);
@@ -133,11 +151,6 @@ int main()
         glDrawArrays(GL_POINTS, 0, numOfPixels);
         glBindVertexArray(0);
 
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
         // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
             ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
@@ -154,14 +167,9 @@ int main()
             ImGui::Combo("Pixel Spacing", &spacing_current, spacing, IM_ARRAYSIZE(spacing));
             if (ImGui::Button("Draw line"))
             {
-                //recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels, pattern[spacing_current]);
-                //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-
                 *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
                 std::vector<float> points = newLine->createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
                 numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
-
-                //float* vertices = &points[0]; // "convert" the std::vector into traditional array
 
                 unsigned int tempVBO;
                 glGenBuffers(1, &tempVBO);
@@ -174,7 +182,6 @@ int main()
                 {
                     // position attribute (only x, y and z component)
                     // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
-                    //glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_STATIC_DRAW);
                     glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(points[0]), points.data(), GL_STATIC_DRAW);
                     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset(could be 0 or null as well) to the vertex attribute
                     glEnableVertexAttribArray(0);
@@ -199,60 +206,77 @@ int main()
             {
                 numOfPixels = 0;
             }
-            ImGui::Text("Relative to the source directory");
             if (ImGui::Button("Save file"))
             {
-                Line tmpLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                tmpLine.writeJSON("filename.json", point_size, spacing_current, clear_color, line_color, lineWidth);
+                saveFileDialog.Open();
             }
             ImGui::SameLine();
             if (ImGui::Button("Open file"))
             {
-                // this is really ugly
-                *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                newLine->readJSON("filename.json", pStart, pFinal, &point_size, &spacing_current, clear_color, line_color, &lineWidth);
-
-                //recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels, pattern[spacing_current]);
-                //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                std::vector<float> points = newLine->createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
-                numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
-
-                //float* vertices = &points[0]; // "convert" the std::vector into traditional array
-
-                unsigned int tempVBO;
-                glGenBuffers(1, &tempVBO);
-                // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-                glBindVertexArray(VAO);
-
-                glBindBuffer(GL_ARRAY_BUFFER, tempVBO);
-
-                try
-                {
-                    // position attribute (only x, y and z component)
-                    // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
-                    //glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_STATIC_DRAW);
-                    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(points[0]), points.data(), GL_STATIC_DRAW);
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset (could be 0 or null as well) to the vertex attribute
-                    glEnableVertexAttribArray(0);
-                }
-                catch ( ... ) {
-                    // this is really dangerous, idk what will happen, just print the error message, and clear the screen and hope for the best
-                    std::cout << "that exception caught" << std::endl;
-                    numOfPixels = 0;
-                }
-
-                // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-                // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-                glBindVertexArray(0);
-
-                glDeleteBuffers(1, &tempVBO);
+                loadFileDialog.Open();
             }
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
+
+            saveFileDialog.Display();
+            loadFileDialog.Display();
+
+            if (saveFileDialog.HasSelected())
+            {
+                std::cout << "Creating file: " << saveFileDialog.GetSelected().string() << std::endl;
+                *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+                newLine->writeJSON(saveFileDialog.GetSelected().string(), point_size, spacing_current, clear_color, line_color, lineWidth);
+
+                saveFileDialog.ClearSelected();
+            }
+
+            if (loadFileDialog.HasSelected())
+            {
+                std::cout << "Selected file: " << loadFileDialog.GetSelected().string() << std::endl;
+
+                // this is really ugly
+                *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+                if (newLine->readJSON(loadFileDialog.GetSelected().string(), pStart, pFinal, &point_size, &spacing_current, clear_color, line_color, &lineWidth))
+                {
+                    std::vector<float> points = newLine->createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
+                    numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
+
+                    //float* vertices = &points[0]; // "convert" the std::vector into traditional array
+
+                    unsigned int tempVBO;
+                    glGenBuffers(1, &tempVBO);
+                    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+                    glBindVertexArray(VAO);
+
+                    glBindBuffer(GL_ARRAY_BUFFER, tempVBO);
+
+                    try
+                    {
+                        // position attribute (only x, y and z component)
+                        // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
+                        //glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_STATIC_DRAW);
+                        glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(points[0]), points.data(), GL_STATIC_DRAW);
+                        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset (could be 0 or null as well) to the vertex attribute
+                        glEnableVertexAttribArray(0);
+                    }
+                    catch (...) {
+                        // this is really dangerous, idk what will happen, just print the error message, and clear the screen and hope for the best
+                        std::cout << "that exception caught" << std::endl;
+                        numOfPixels = 0;
+                    }
+
+                    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+                    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+                    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+                    glBindVertexArray(0);
+
+                    glDeleteBuffers(1, &tempVBO);
+                }
+                loadFileDialog.ClearSelected();
+            }
         }
         // Rendering
         ImGui::Render();

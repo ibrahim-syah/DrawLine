@@ -721,7 +721,7 @@ std::vector<float> Line::createPoints(const unsigned int _pattern, const int _li
     return points;
 }
 
-void Line::writeJSON(const char* filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4], const int lineWidth)
+void Line::writeJSON(const std::string filename, const float point_size, const int pattern, const float clear_color[4], const float line_color[4], const int lineWidth)
 {
     m_root["scr_width"] = m_width;
     m_root["scr_height"] = m_height;
@@ -751,31 +751,31 @@ void Line::writeJSON(const char* filename, const float point_size, const int pat
     std::string document = Json::writeString(wbuilder, m_root);
 
     std::fstream file;
-    file.open(filename, std::ios::out);
+    file.open(filename.c_str(), std::ios::out);
     if (!file) {
-        std::cout << "File not created!";
+        std::cout << "File not created!" << std::endl;
     }
     else {
-        std::cout << "File created successfully!";
+        std::cout << "File created successfully!" << std::endl;
         file << document << "\n";
         file.close();
     }
 }
 
-void Line::readJSON(const char* filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4], int *lineWidth)
+bool Line::readJSON(const std::string filename, int pStart[2], int pFinal[2], float *point_size, int *pattern, float clear_color[4], float line_color[4], int *lineWidth)
 {
     Json::CharReaderBuilder rbuilder;
     rbuilder["collectComments"] = false;
     std::string errs;
 
-    std::fstream file;
-    std::string document;
-    file.open(filename, std::ios::in);
+    std::ifstream file;
+    file.open(filename.c_str());
     if (!file) {
-        std::cout << "File cannot be read!";
+        std::cout << "File cannot be read!" << std::endl;
+        return false;
     }
     else {
-        std::cout << "Read file successfully!";
+        std::cout << "Read file successfully!" << std::endl;
         bool ok = Json::parseFromStream(rbuilder, file, &m_root, &errs);
 
         m_width = m_root["scr_width"].asInt();
@@ -806,5 +806,6 @@ void Line::readJSON(const char* filename, int pStart[2], int pFinal[2], float *p
         line_color[3] = m_root["line_color"]["A"].asFloat();
 
         file.close();
+        return true;
     }
 }

@@ -13,19 +13,19 @@
 		"G" : 0.0,
 		"R" : 0.0
 	},
-	"line_width" : 5,
+	"line_width" : 1,
 	"pFinal" : 
 	{
-		"x" : 500,
-		"y" : 400
+		"x" : 352,
+		"y" : 292
 	},
 	"pStart" : 
 	{
-		"x" : 200,
-		"y" : 400
+		"x" : 601,
+		"y" : 535
 	},
 	"point_size" : 1.0,
 	"scr_height" : 705,
 	"scr_width" : 1366,
-	"spacing_index" : 3
+	"spacing_index" : 0
 }
