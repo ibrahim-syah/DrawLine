@@ -206,6 +206,10 @@ int main()
             if (ImGui::Button("Clear screen"))
             {
                 numOfPixels = 0;
+                clear_color[0] = 1.0f;
+                clear_color[1] = 1.0f;
+                clear_color[2] = 1.0f;
+                clear_color[3] = 1.0f;
             }
             if (ImGui::Button("Save file"))
             {
