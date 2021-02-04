@@ -90,9 +90,12 @@ std::vector<float> Line::createPoints(const unsigned int _pattern, const int _li
                 float ndc_x, ndc_y, ndc_z;
                 ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
 
-                this->convertToNDC(x, yvalue, &ndc_x, &ndc_y);
-                std::vector<float> point = { ndc_x, ndc_y, ndc_z };
-                points.insert(points.end(), point.begin(), point.end());
+                for (int j = 0; j < _lineWidth; j++)
+                {
+                    this->convertToNDC(x, yvalue + j, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                }
                 x++;
 
                 if (counter == 23)
@@ -125,9 +128,12 @@ std::vector<float> Line::createPoints(const unsigned int _pattern, const int _li
                 float ndc_x, ndc_y, ndc_z;
                 ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
 
-                this->convertToNDC(xvalue, y, &ndc_x, &ndc_y);
-                std::vector<float> point = { ndc_x, ndc_y, ndc_z };
-                points.insert(points.end(), point.begin(), point.end());
+                for (int j = 0; j < _lineWidth; j++)
+                {
+                    this->convertToNDC(xvalue + j, y, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                }
                 y++;
 
                 if (counter == 23)
@@ -153,9 +159,12 @@ std::vector<float> Line::createPoints(const unsigned int _pattern, const int _li
                 float ndc_x, ndc_y, ndc_z;
                 ndc_z = (curr_pattern & 0x000001) ? 0.0f : 2.0f; // if it maps to a pattern index of 0, set it outside of the accepted z coordinate
 
-                this->convertToNDC(xvalue, y, &ndc_x, &ndc_y);
-                std::vector<float> point = { ndc_x, ndc_y, ndc_z };
-                points.insert(points.end(), point.begin(), point.end());
+                for (int j = 0; j < _lineWidth; j++)
+                {
+                    this->convertToNDC(xvalue + j, y, &ndc_x, &ndc_y);
+                    std::vector<float> point = { ndc_x, ndc_y, ndc_z };
+                    points.insert(points.end(), point.begin(), point.end());
+                }
                 y++;
 
                 if (counter == 23)

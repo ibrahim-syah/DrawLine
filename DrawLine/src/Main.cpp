@@ -106,9 +106,7 @@ int main()
         0x00000f,
     };
 
-    float vertices[] = {
-        2.0f, -0.5f, 0.0f,
-    };
+    Line* newLine = new Line();
 
     glEnable(GL_PROGRAM_POINT_SIZE); // enable this to manipulate pixel size
 
@@ -134,6 +132,7 @@ int main()
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_POINTS, 0, numOfPixels);
+        glBindVertexArray(0);
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -157,8 +156,10 @@ int main()
             if (ImGui::Button("Draw line"))
             {
                 //recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels, pattern[spacing_current]);
-                Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                std::vector<float> points = newLine.createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
+                //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+
+                *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+                std::vector<float> points = newLine->createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
                 numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
 
                 float* vertices = &points[0]; // "convert" the std::vector into traditional array
@@ -173,7 +174,7 @@ int main()
                     // position attribute (only x, y and z component)
                     // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
                     glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0); // last argument is the pointer to the offset(could be 0 or null as well) to the vertex attribute
+                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset(could be 0 or null as well) to the vertex attribute
                     glEnableVertexAttribArray(0);
                 }
                 catch ( ... ) {
@@ -197,19 +198,19 @@ int main()
             ImGui::Text("Relative to the source directory");
             if (ImGui::Button("Save file"))
             {
-                Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                newLine.writeJSON("filename.json", point_size, spacing_current, clear_color, line_color, lineWidth);
+                Line tmpLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+                tmpLine.writeJSON("filename.json", point_size, spacing_current, clear_color, line_color, lineWidth);
             }
             ImGui::SameLine();
             if (ImGui::Button("Open file"))
             {
                 // this is really ugly
-                Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                newLine.readJSON("filename.json", pStart, pFinal, &point_size, &spacing_current, clear_color, line_color, &lineWidth);
+                *newLine = Line(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
+                newLine->readJSON("filename.json", pStart, pFinal, &point_size, &spacing_current, clear_color, line_color, &lineWidth);
 
                 //recalculateVertices(&VAO, &VBO, pStart, pFinal, &numOfPixels, pattern[spacing_current]);
                 //Line newLine(pStart, pFinal, SCR_WIDTH, SCR_HEIGHT);
-                std::vector<float> points = newLine.createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
+                std::vector<float> points = newLine->createPoints(pattern[spacing_current], lineWidth); // this is 1d vector!!
                 numOfPixels = points.size() / 3; // each pixel vertex within the std::vector has 3 components
 
                 float* vertices = &points[0]; // "convert" the std::vector into traditional array
@@ -224,7 +225,7 @@ int main()
                     // position attribute (only x, y and z component)
                     // Known bug: Access violation reading location, hard to reproduce, but should pop up if you redraw the line often enough
                     glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0); // last argument is the pointer to the offset (could be 0 or null as well) to the vertex attribute
+                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL); // last argument is the pointer to the offset (could be 0 or null as well) to the vertex attribute
                     glEnableVertexAttribArray(0);
                 }
                 catch ( ... ) {
@@ -266,6 +267,8 @@ int main()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+
+    delete newLine;
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
